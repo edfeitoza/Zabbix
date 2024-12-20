@@ -1,0 +1,143 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: c5a5a62f3b8b43e8919fa76917d76175
+      name: Templates/switch
+  templates:
+    - uuid: 4319b906ee1447b08ab671fdd0cc11d2
+      template: Custom_Switch_HP-1920s
+      name: Custom_Switch_HP-1920s
+      description: 'Template compativel com Switch: 1920s'
+      groups:
+        - name: Templates/switch
+      items:
+        - uuid: a163f39c830a421fab8da4df78469398
+          name: 'Uso CPU'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.11.5.7.5.7.1.1.1.1.4.9.0
+          key: .1.3.6.1.4.1.11.5.7.5.7.1.1.1.1.4.9.0
+          delay: 15s
+          history: 7d
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '300 Secs \(\s*([0-9.]+)%'
+                - \1
+            - type: JAVASCRIPT
+              parameters:
+                - 'return parseFloat(value).toFixed(2) + ''%'';'
+      discovery_rules:
+        - uuid: d77c5a69bce74b87a477be17825e8747
+          name: 'Qtd Descricao'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#IFDESCR},IF-MIB::ifDescr]'
+          key: ifDescr
+          delay: 12h
+          enabled_lifetime_type: DISABLE_NEVER
+        - uuid: 2690a3dbb599424ea04d7c89a86a9a48
+          name: 'Qtd Interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#IFINDEX},IF-MIB::ifIndex]'
+          key: ifIndex
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 841cbf78f89d4a34b57c20c54761e061
+              name: 'Speed Interface {#IFINDEX}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.31.1.1.1.15.{#IFINDEX}'
+              key: '1.3.6.1.2.1.31.1.1.1.15[{#IFINDEX}]'
+              delay: 10s
+              history: 7d
+              trends: '0'
+              units: b
+            - uuid: 238e2594a9bc434e85e2ae564fd1ebd8
+              name: 'Inbound error {#IFINDEX}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifInErrors.{#IFINDEX}'
+              key: 'ifInErrors[{#IFINDEX}]'
+              delay: 120s
+              history: 7d
+              trends: '0'
+              status: DISABLED
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+            - uuid: f1f6bdd86f49490d92a5ab9400817eb9
+              name: 'Trafego RX Interfaces {#IFINDEX}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifInOctets.{#IFINDEX}'
+              key: 'ifInOctets[{#IFINDEX}]'
+              delay: 120s
+              history: 7d
+              trends: '0'
+              units: bps
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+            - uuid: aa77e7ba8fe244b6b281ec3c846d6c49
+              name: 'Status Interface {#IFINDEX}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifOperStatus.{#IFINDEX}'
+              key: 'ifOperStatus[{#IFINDEX}]'
+              history: 7d
+              trends: '0'
+            - uuid: a2069dc7f85f4b67b8a711a5f6166bb3
+              name: 'Oubound error {#IFINDEX}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifOutErrors.{#IFINDEX}'
+              key: 'ifOutErrors[{#IFINDEX}]'
+              delay: 120s
+              history: 7d
+              trends: '0'
+              status: DISABLED
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+            - uuid: 01e353ee16364c8e904a2a6cc925701b
+              name: 'Trafego TX Interfaces {#IFINDEX}'
+              type: SNMP_AGENT
+              snmp_oid: 'IF-MIB::ifOutOctets.{#IFINDEX}'
+              key: 'ifOutOctets[{#IFINDEX}]'
+              delay: 120s
+              history: 7d
+              trends: '0'
+              units: bps
+              preprocessing:
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+          graph_prototypes:
+            - uuid: 9b5c1b1e049a44c5a5aeb79df2df4440
+              name: 'Interface {#IFINDEX}'
+              ymin_type_1: FIXED
+              graph_items:
+                - sortorder: '1'
+                  color: 199C0D
+                  item:
+                    host: Custom_Switch_HP-1920s
+                    key: 'ifInOctets[{#IFINDEX}]'
+                - sortorder: '2'
+                  color: F63100
+                  item:
+                    host: Custom_Switch_HP-1920s
+                    key: 'ifOutOctets[{#IFINDEX}]'
+        - uuid: 298cd19606944ab98c09fcc0b194f6a5
+          name: 'Status Interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#IFOPERSTATUS},IF-MIB::ifOperStatus]'
+          key: ifOperStatus
+          delay: 10s
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 10s
